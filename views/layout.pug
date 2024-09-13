@@ -1,0 +1,29 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    title Trivia Game
+    link(rel="stylesheet", href="/stylesheets/style.css")
+  body
+    header
+      nav
+        ul
+          li
+            a(href="/") Home
+          if user
+            li
+              a(href="/game") Play Game
+            li
+              a(href="/leaderboard") Leaderboard
+            li
+              a(href="/auth/logout") Logout
+          else
+            li
+              a(href="/auth/google") Login with Google
+            li
+              a(href="/auth/github") Login with GitHub
+    main
+      block content
+    footer
+      p &copy; 2024 Trivia Game. All rights reserved.

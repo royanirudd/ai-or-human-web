@@ -1,0 +1,11 @@
+extends layout
+
+block content
+  h1 Welcome to Trivia Game
+  if user
+    p Hello, #{user.name}!
+    a.button(href="/game") Start Game
+  else
+    p Please log in to play the game.
+    a.button(href="/auth/google") Login with Google
+    a.button(href="/auth/github") Login with GitHub
