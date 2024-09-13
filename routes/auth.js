@@ -2,31 +2,32 @@ const express = require('express');
 const passport = require('passport');
 const router = express.Router();
 
-router.get('/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
-);
+// Google OAuth routes
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 router.get('/google/callback', 
   passport.authenticate('google', { failureRedirect: '/login' }),
   (req, res) => {
-    res.redirect('/game');
+    res.redirect('/');
   }
 );
 
-router.get('/github',
-  passport.authenticate('github', { scope: ['user:email'] })
-);
+// GitHub OAuth routes
+router.get('/github', passport.authenticate('github'));
 
 router.get('/github/callback', 
   passport.authenticate('github', { failureRedirect: '/login' }),
   (req, res) => {
-    res.redirect('/game');
+    res.redirect('/');
   }
 );
 
+// Logout route
 router.get('/logout', (req, res) => {
-  req.logout();
-  res.redirect('/');
+  req.logout((err) => {
+    if (err) { return next(err); }
+    res.redirect('/');
+  });
 });
 
 module.exports = router;
