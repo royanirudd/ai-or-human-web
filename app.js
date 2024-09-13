@@ -5,10 +5,13 @@ const passport = require('passport');
 const mongoose = require('mongoose');
 const path = require('path');
 
+// Import Passport config
+require('./config/passport');
+
 const app = express();
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('Error connecting to MongoDB:', err));
 
@@ -28,35 +31,29 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Make user available in all templates
+app.use((req, res, next) => {
+  res.locals.user = req.user;
+  next();
+});
+
 // Import routes
 const indexRouter = require('./routes/index');
 const authRouter = require('./routes/auth');
 const gameRouter = require('./routes/game');
 
-// Use routes with error checking
-if (typeof indexRouter === 'function') {
-  app.use('/', indexRouter);
-} else {
-  console.error('indexRouter is not a function:', indexRouter);
-}
-
-if (typeof authRouter === 'function') {
-  app.use('/auth', authRouter);
-} else {
-  console.error('authRouter is not a function:', authRouter);
-}
-
-if (typeof gameRouter === 'function') {
-  app.use('/game', gameRouter);
-} else {
-  console.error('gameRouter is not a function:', gameRouter);
-}
+// Use routes
+app.use('/', indexRouter);
+app.use('/auth', authRouter);
+app.use('/game', gameRouter);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send('Something broke!');
+  res.status(500).render('error', { error: err });
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+module.exports = app;

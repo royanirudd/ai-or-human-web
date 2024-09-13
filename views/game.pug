@@ -1,7 +1,12 @@
 extends layout
 
 block content
-  h1 Trivia Game
+  h1 AI or Human Game
   #game-container
-    // Game will be rendered here using JavaScript
-  script(src="/javascripts/game.js")
+    p#question
+    button#human-btn Human
+    button#ai-btn AI
+  p#score Your score: 
+    span#score-value 0
+  
+  script(src='/javascripts/game.js')

@@ -1,11 +1,14 @@
 extends layout
 
 block content
-  h1 Welcome to Trivia Game
+  h1= title
+  p Welcome to #{title}
   if user
     p Hello, #{user.name}!
-    a.button(href="/game") Start Game
+    a(href='/game') Play Game
+    br
+    a(href='/auth/logout') Logout
   else
-    p Please log in to play the game.
-    a.button(href="/auth/google") Login with Google
-    a.button(href="/auth/github") Login with GitHub
+    a(href='/auth/google') Login with Google
+    br
+    a(href='/auth/github') Login with GitHub
