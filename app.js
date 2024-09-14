@@ -1,28 +1,32 @@
 require('dotenv').config();
 const express = require('express');
-const session = require('express-session');
-const passport = require('passport');
 const mongoose = require('mongoose');
+const passport = require('passport');
+const session = require('express-session');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const GitHubStrategy = require('passport-github2').Strategy;
 const path = require('path');
 
-// Import Passport config
-require('./config/passport');
+const User = require('./models/User');
+const authRoutes = require('./routes/auth');
+const gameRoutes = require('./routes/game');
 
 const app = express();
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('Error connecting to MongoDB:', err));
-
-// View engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'pug');
+  .then(() => {
+    console.log('Connected to MongoDB');
+    console.log('Current database:', mongoose.connection.db.databaseName);
+  })
+  .catch((err) => console.error('MongoDB connection error:', err));
 
 // Middleware
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
@@ -31,29 +35,75 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Make user available in all templates
-app.use((req, res, next) => {
-  res.locals.user = req.user;
-  next();
+// Passport configuration
+passport.serializeUser((user, done) => {
+  done(null, user.id);
 });
 
-// Import routes
-const indexRouter = require('./routes/index');
-const authRouter = require('./routes/auth');
-const gameRouter = require('./routes/game');
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (err) {
+    done(err);
+  }
+});
 
-// Use routes
-app.use('/', indexRouter);
-app.use('/auth', authRouter);
-app.use('/game', gameRouter);
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: "http://localhost:3000/auth/google/callback"
+  },
+  async (accessToken, refreshToken, profile, done) => {
+    try {
+      let user = await User.findOne({ googleId: profile.id });
+      if (!user) {
+        user = new User({
+          name: profile.displayName,
+          email: profile.emails[0].value,
+          googleId: profile.id
+        });
+        await user.save();
+      }
+      return done(null, user);
+    } catch (err) {
+      return done(err);
+    }
+  }
+));
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).render('error', { error: err });
+passport.use(new GitHubStrategy({
+    clientID: process.env.GITHUB_CLIENT_ID,
+    clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    callbackURL: "http://localhost:3000/auth/github/callback"
+  },
+  async (accessToken, refreshToken, profile, done) => {
+    try {
+      let user = await User.findOne({ githubId: profile.id });
+      if (!user) {
+        user = new User({
+          name: profile.displayName,
+          email: profile.emails ? profile.emails[0].value : null,
+          githubId: profile.id
+        });
+        await user.save();
+      }
+      return done(null, user);
+    } catch (err) {
+      return done(err);
+    }
+  }
+));
+
+// Routes
+app.use('/auth', authRoutes);
+app.use('/game', gameRoutes);
+
+app.get('/', (req, res) => {
+  res.render('index', { user: req.user });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-module.exports = app;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

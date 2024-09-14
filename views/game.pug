@@ -1,12 +1,97 @@
 extends layout
 
 block content
-  h1 AI or Human Game
-  #game-container
-    p#question
-    button#human-btn Human
-    button#ai-btn AI
-  p#score Your score: 
-    span#score-value 0
+  h1 AI or Human?
   
-  script(src='/javascripts/game.js')
+  if user
+    p Welcome, #{user.name}!
+    
+    div#game-container
+      h2 Prompt:
+      p#prompt= prompt
+      
+      h2 Answer:
+      p#answer= answer
+      
+      button#ai-button AI
+      button#human-button Human
+      
+      p#result
+      
+      div#stats
+        p Score: <span id="score">0</span>
+        p Streak: <span id="streak">0</span>
+    
+    script.
+      const aiButton = document.getElementById('ai-button');
+      const humanButton = document.getElementById('human-button');
+      const resultElement = document.getElementById('result');
+      const promptElement = document.getElementById('prompt');
+      const answerElement = document.getElementById('answer');
+      const scoreElement = document.getElementById('score');
+      const streakElement = document.getElementById('streak');
+      
+      let currentIsAI = '#{isAI}';
+      let score = 0;
+      let streak = 0;
+      
+      function updateStats(correct) {
+        if (correct) {
+          score++;
+          streak++;
+        } else {
+          streak = 0;
+        }
+        scoreElement.textContent = score;
+        streakElement.textContent = streak;
+      }
+      
+      function makeGuess(guess) {
+        fetch('/game/guess', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ guess, isAI: currentIsAI }),
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.correct) {
+            resultElement.textContent = 'Correct!';
+          } else {
+            resultElement.textContent = 'Incorrect.';
+          }
+          updateStats(data.correct);
+          aiButton.disabled = true;
+          humanButton.disabled = true;
+          
+          // Automatically move to the next prompt after 2 seconds
+          setTimeout(getNextPrompt, 2000);
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+        });
+      }
+      
+      function getNextPrompt() {
+        fetch('/game/next')
+        .then(response => response.json())
+        .then(data => {
+          promptElement.textContent = data.prompt;
+          answerElement.textContent = data.answer;
+          currentIsAI = data.isAI.toString();
+          resultElement.textContent = '';
+          aiButton.disabled = false;
+          humanButton.disabled = false;
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+        });
+      }
+      
+      aiButton.addEventListener('click', () => makeGuess('ai'));
+      humanButton.addEventListener('click', () => makeGuess('human'));
+  else
+    p Please 
+      a(href="/auth/google") log in 
+      | to play the game.
