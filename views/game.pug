@@ -4,7 +4,7 @@ block content
   h1 AI or Human?
   
   if user
-    p Welcome, #{user.name}!
+    p(style="text-align: center;") Welcome, #{user.name}!
     
     div#game-container
       h2 Prompt:
@@ -13,8 +13,9 @@ block content
       h2 Answer:
       p#answer= answer
       
-      button#ai-button AI
-      button#human-button Human
+      div.button-container
+        button#ai-button AI
+        button#human-button Human
       
       p#result
       
@@ -58,14 +59,15 @@ block content
         .then(data => {
           if (data.correct) {
             resultElement.textContent = 'Correct!';
+            resultElement.style.color = 'var(--color-result-correct)';
           } else {
             resultElement.textContent = 'Incorrect.';
+            resultElement.style.color = 'var(--color-result-incorrect)';
           }
           updateStats(data.correct);
           aiButton.disabled = true;
           humanButton.disabled = true;
           
-          // Automatically move to the next prompt after 2 seconds
           setTimeout(getNextPrompt, 2000);
         })
         .catch((error) => {
@@ -81,6 +83,7 @@ block content
           answerElement.textContent = data.answer;
           currentIsAI = data.isAI.toString();
           resultElement.textContent = '';
+          resultElement.style.color = 'var(--color-text)';
           aiButton.disabled = false;
           humanButton.disabled = false;
         })
@@ -92,6 +95,6 @@ block content
       aiButton.addEventListener('click', () => makeGuess('ai'));
       humanButton.addEventListener('click', () => makeGuess('human'));
   else
-    p Please 
+    p(style="text-align: center;") Please 
       a(href="/auth/google") log in 
       | to play the game.
