@@ -5,10 +5,13 @@ block content
   p Welcome to #{title}
   if user
     p Hello, #{user.name}!
-    a(href='/game') Play Game
+    a(href='/game', class='button button-24') Play Game
     br
-    a(href='/auth/logout') Logout
+    a(href='/auth/logout', class='button button-24') Logout
   else
-    a(href='/auth/google') Login with Google
+    a(href='/auth/google', class='button button-24', id='loginBtn1') Google
     br
-    a(href='/auth/github') Login with GitHub
+    a(href='/auth/github', class='button button-24', id='loginBtn2') GitHub
+    br
+    a(href='#', class='button button-24', id='loginBtn3') Guest 
+
