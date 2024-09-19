@@ -1,6 +1,7 @@
 # AI-or-Human-web
 
 A web-based interface for managing and interacting with the Discord bot.
+![capture](assets/Capture.PNG)
 
 ## Technologies Used
 
